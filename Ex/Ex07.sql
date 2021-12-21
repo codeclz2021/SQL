@@ -1,5 +1,5 @@
 /***********************************
-*Sub Query
+*Sub Query(단일행)
 ************************************/
 --1)전체쿼리문 구조
 select  first_name,
@@ -19,7 +19,7 @@ select  first_name,
         phone_number,
         department_id
 from employees
-where salary > (select salary
+where salary > (select  salary
                 from employees
                 where first_name = 'Den');
 
@@ -67,9 +67,115 @@ where salary < (select avg(salary)
                 from employees);
 
 
+/***********************************
+*Sub Query(다중행)
+************************************/
+--부서번호가 110인 직원의 급여와 같은 모든 직원의 사번, 이름, 급여를 출력하세요
+--1. 부서번호가 110인 직원의 급여리스트를 구한다.
+--   12008  8300
+select  salary
+from employees
+where department_id = 110;
+
+--2. 급여가 12008, 8300 인 직원의 리스틀 구한다
+--표현1
+select  employee_id,
+        first_name,
+        salary
+from employees
+where salary = 12008
+or salary = 8300;
+
+--표현2
+select  employee_id,
+        first_name,
+        salary
+from employees
+where salary in (12008, 8300);
+
+--3 두식을 조합한다
+select  employee_id,
+        first_name,
+        salary
+from employees
+where salary in (select  salary
+                 from employees
+                 where department_id = 110);
 
 
+--예제)
+--각 부서별로 최고급여를 받는 사원을 출력하세요
+/*
+ 100(마케팅)  20000   황일영   
+ 200(IT)     12300   강호동   
+ 200(IT)     8700    이효리    (X)
+*/
+--1. 그룹(부서)별 최고급여를 구한다 (사람 first_name은 표현할 수 없다)
+select  department_id,
+        max(salary)
+from employees
+group by department_id;
+
+--그룹(부서)별 최고급여 --> 사원테이블에서 그룹(부서)번호 와 급여가 같은 직원을 구한다.
+select  first_name,
+        salary,
+        phone_number,
+        department_id
+from employees
+where (department_id, salary) in (select department_id, 
+                                         max(salary)
+                                  from employees
+                                  group by department_id);
+
+-- any 연산자
+--부서번호가 110인 직원의 급여 보다 큰 모든 직원의 
+--사번, 이름, 급여를 출력하세요.(or연산--> 8300보다 큰)
+
+--1. 부서번호가 110인 직원의 급여
+select salary
+from employees
+where department_id = 110;
+
+--2. 부서번호가 110인(12008, 8300) 보다 급여가 큰직원리스트( 사번, 이름, 급여)를 출력
+select  employee_id,
+        first_name,
+        salary
+from employees
+where salary > 12008
+or salary > 8300;
+
+--3.조합
+select  employee_id,
+        first_name,
+        salary
+from employees
+where salary >any ( select salary
+                    from employees
+                    where department_id = 110); 
 
 
+-- all 연산자
+--부서번호가 110인 직원의 급여 보다 큰 모든 직원의 
+--사번, 이름, 급여를 출력하세요.(and연산--> 12008보다 큰)
 
+--1. 부서번호가 110인 직원의 급여
+select salary
+from employees
+where department_id = 110;
 
+--2. 부서번호가 110인(12008, 8300) 보다 급여가 큰직원리스트( 사번, 이름, 급여)를 출력
+select  employee_id,
+        first_name,
+        salary
+from employees
+where salary > 12008
+and salary >8300;
+
+--3. 조합
+select  employee_id,
+        first_name,
+        salary
+from employees
+where salary >all ( select salary
+                    from employees
+                    where department_id = 110);
